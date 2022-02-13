@@ -8,15 +8,18 @@ import 'package:image/image.dart' as img;
 import 'package:face_mask/main.dart';
 
 class FaceDetectorView extends StatefulWidget {
+  const FaceDetectorView({Key? key}) : super(key: key);
+
   @override
   _FaceDetectorViewState createState() => _FaceDetectorViewState();
 }
 
 class _FaceDetectorViewState extends State<FaceDetectorView> {
-  final List<bool>? isBusy;
+  bool isBusy = false;
   CustomPaint? customPaint;
-  final List<Rect>? _rects = [];
-  List<Face>? _faces;
+  final List<Rect> _rects = [];
+  List<Face> _faces = [];
+  final List<bool> _isblue = [];
   img.Image? faceCrop, originalImage;
   List? recognitions;
   int x = 0, y = 0, w = 0, h = 0;
@@ -30,16 +33,17 @@ class _FaceDetectorViewState extends State<FaceDetectorView> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_sharp),
             onPressed: () {
+              super.dispose();
               Navigator.pop(context);
             },
           ),
         ),
         body: CameraView(
-          onImage: (inputImage, image) {
-            processImage(inputImage, image);
-          },
-          initialDirection: CameraLensDirection.front, customPaint: customPaint
-        ));
+            onImage: (inputImage, image) {
+              processImage(inputImage, image);
+            },
+            initialDirection: CameraLensDirection.front,
+            customPaint: customPaint));
   }
 
   img.Image _convertedToImage(CameraImage image) {
@@ -72,18 +76,21 @@ class _FaceDetectorViewState extends State<FaceDetectorView> {
   Future<void> processImage(InputImage inputImage, CameraImage image) async {
     if (isBusy) return;
     isBusy = true;
-    _rects!.clear();
+    _rects.clear();
+    _isblue.clear();
     _faces = await (faceDetector.processImage(inputImage));
-    if (mounted && _faces!.isNotEmpty) {
+    if (mounted && _faces.isNotEmpty) {
       originalImage = _convertedToImage(image);
-      for (int i = 0; i < _faces!.length; i++) {
-        _rects!.add(_faces![i].boundingBox);
-        x = _faces![i].boundingBox.left.toInt();
-        y = _faces![i].boundingBox.top.toInt();
-        w = _faces![i].boundingBox.width.toInt();
-        h = _faces![i].boundingBox.height.toInt();
+      for (int i = 0; i < _faces.length; i++) {
+        _rects.add(_faces[i].boundingBox);
+        x = _faces[i].boundingBox.left.toInt();
+        y = _faces[i].boundingBox.top.toInt();
+        w = _faces[i].boundingBox.width.toInt();
+        h = _faces[i].boundingBox.height.toInt();
         faceCrop = img.copyCrop(originalImage!, x, y, w, h);
-        File(tempPath!).writeAsBytesSync(img.encodePng(faceCrop!), flush: true);
+        faceCrop = img.copyResizeCropSquare(faceCrop!, 60);
+        File(tempPath!)
+            .writeAsBytesSync(img.encodePng(faceCrop!), flush: false);
         recognitions = await Tflite.runModelOnImage(
           path: tempPath!,
           numResults: 1,
@@ -92,23 +99,19 @@ class _FaceDetectorViewState extends State<FaceDetectorView> {
           imageStd: 127.5,
         );
         if (recognitions![0]["label"] == "mask") {
-          customPaint=CustomPaint(
-            painter: livePainter(true,_rects![i],inputImage.inputImageData!.size,inputImage.inputImageData!.imageRotation),
-          );
-        }else {
-          customPaint = CustomPaint(
-            painter: livePainter(false, _rects![i], inputImage.inputImageData!.size,inputImage.inputImageData!.imageRotation),
-          );
+          _isblue.add(true);
+        } else {
+          _isblue.add(false);
         }
+        customPaint = CustomPaint(
+          painter: FacePainter(_isblue, _rects,
+              absoluteImageSize: inputImage.inputImageData!.size,
+              rotation: inputImage.inputImageData!.imageRotation),
+        );
         setState(() {});
-    }/*for multi faces 
-    else {
-          customPaint=CustomPaint(
-            painter: livePainter(true,_rects![i],inputImage.inputImageData!.size,inputImage.inputImageData!.imageRotation),
-          );
-        }
-        setState(() {});
-      }*/
+        File(tempPath!).delete(recursive: true);
+        faceCrop!.disposeMethod;
+      }
     } else {
       customPaint = null;
       setState(() {});

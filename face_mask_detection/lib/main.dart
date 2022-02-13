@@ -116,6 +116,8 @@ class _MyAppState extends State<ImageScn> {
   void dispose() {
     faceDetector.close();
     imageCache!.clear();
+    Tflite.close();
+    cameras.clear();
     super.dispose();
   }
 
@@ -228,12 +230,13 @@ class _MyAppState extends State<ImageScn> {
   Future _loadModel() async {
     try {
       (await Tflite.loadModel(
-        model: 'assets/mask_detector.tflite',
-        labels: 'assets/mask_labelmap.txt',
-        useGpuDelegate: true
-      ))!;
-    } on Exception {
-      //print('Failed to load model.');
+          model: 'assets/mask_detector.tflite',
+          labels: 'assets/mask_labelmap.txt',
+          useGpuDelegate: true,
+          numThreads: 3))!;
+    } on Exception catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('unable to load model : $e')));
     }
   }
 
@@ -281,8 +284,7 @@ class _MyAppState extends State<ImageScn> {
     List<Face>? _faces =
         await (faceDetector.processImage(InputImage.fromFilePath(imagePath)));
     if (mounted && _faces.isNotEmpty) {
-      FaceContour? _noseBase;
-      originalImage = img.decodeImage(await XFile(imagePath).readAsBytes());
+      originalImage = img.decodeJpg(await XFile(imagePath).readAsBytes());
       for (int i = 0; i < _faces.length; i++) {
         _rects!.add(_faces[i].boundingBox);
         x = _faces[i].boundingBox.left.toInt();
@@ -290,7 +292,9 @@ class _MyAppState extends State<ImageScn> {
         w = _faces[i].boundingBox.width.toInt();
         h = _faces[i].boundingBox.height.toInt();
         faceCrop = img.copyCrop(originalImage!, x, y, w, h);
-        File(tempPath!).writeAsBytesSync(img.encodePng(faceCrop!), flush: true);
+        faceCrop = img.copyResizeCropSquare(faceCrop!, 60);
+        File(tempPath!)
+            .writeAsBytesSync(img.encodePng(faceCrop!), flush: false);
         recognitions = await Tflite.runModelOnImage(
           path: tempPath!,
           numResults: 1,
@@ -323,13 +327,14 @@ class _MyAppState extends State<ImageScn> {
 }
 
 class FacePainter extends CustomPainter {
-  ui.Image? image;
-  final List<bool> isBlue;
+  final ui.Image? image;
+  final List<bool> _isBlue;
   final List<Rect> _rects;
   final Size? absoluteImageSize;
   final InputImageRotation? rotation;
 
-  FacePainter(this.isBlue, this._rects, {this.image,this.absoluteImageSize,this.rotation});
+  FacePainter(this._isBlue, this._rects,
+      {this.image, this.absoluteImageSize, this.rotation});
 
   @override
   void paint(ui.Canvas canvas, ui.Size size) {
@@ -341,54 +346,36 @@ class FacePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.0
       ..color = Colors.cyanAccent;
-
     if (image != null) {
-      canvas.drawImage(image!, Offset.zero, Paint());}
+      canvas.drawImage(image!, Offset.zero, Paint());
       for (int i = 0; i < _rects.length; i++) {
-        if (isBlue[i]) {
+        if (_isBlue[i]) {
           canvas.drawRect(_rects[i], paint2);
         } else {
           canvas.drawRect(_rects[i], paint1);
         }
+      }
+    } else {
+      for (int i = 0; i < _rects.length; i++) {
+        canvas.drawRect(
+            Rect.fromLTRB(
+                translateX(_rects[i].left, rotation!, size, absoluteImageSize!),
+                translateY(_rects[i].top, rotation!, size, absoluteImageSize!),
+                translateX(
+                    _rects[i].right, rotation!, size, absoluteImageSize!),
+                translateY(
+                    _rects[i].bottom, rotation!, size, absoluteImageSize!)),
+            _isBlue[i] ? paint2 : paint1);
+      }
     }
   }
 
   @override
   bool shouldRepaint(FacePainter oldDelegate) {
-    return image != oldDelegate.image || oldDelegate.absoluteImageSize != absoluteImageSize;
-  }
-}
-class livePainter extends CustomPainter{
-  final bool isBlue;
-  final Rect rect;
-  final Size absoluteImageSize;
-  final InputImageRotation rotation;
-
-  livePainter(this.isBlue, this.rect,this.absoluteImageSize,this.rotation);
-
-  @override
-  void paint(ui.Canvas canvas, ui.Size size) {
-    final Paint paint1 = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..color = Colors.red;
-    final Paint paint2 = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..color = Colors.cyanAccent;
-
-    canvas.drawRect(
-        Rect.fromLTRB(
-            translateX(rect.left, rotation, size, absoluteImageSize),
-            translateY(rect.top, rotation, size, absoluteImageSize),
-            translateX(rect.right, rotation, size, absoluteImageSize),
-            translateY(rect.bottom, rotation, size, absoluteImageSize)
-        ),
-        isBlue ? paint2 : paint1
-    );
-  }
-  @override
-  bool shouldRepaint(livePainter oldDelegate) {
-    return oldDelegate.absoluteImageSize != absoluteImageSize;
+    return oldDelegate._rects != _rects ||
+        oldDelegate._isBlue != _isBlue ||
+        oldDelegate.absoluteImageSize != absoluteImageSize ||
+        oldDelegate.rotation != rotation ||
+        oldDelegate.image != image;
   }
 }
