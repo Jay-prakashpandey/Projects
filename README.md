@@ -4,7 +4,7 @@
 ## It contains projects as bellow 
 ## 1. Flutter
 
-> a) [Weather iot-project] (https://github.com/Jay-prakashpandey/Projects/tree/main/Weather_Iot)
+> a) [Weather iot-project](https://github.com/Jay-prakashpandey/Projects/tree/main/Weather_Iot)
 
 > b) [Face_mask detector App](https://github.com/Jay-prakashpandey/Projects/tree/main/face_mask_detection)
 
