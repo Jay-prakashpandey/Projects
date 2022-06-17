@@ -3,9 +3,12 @@
 # welcome to my Project repositry
 ## It contains projects as bellow 
 ## 1. Flutter
-> a) [Face_mask detector App](https://github.com/Jay-prakashpandey/Projects/tree/main/face_mask_detection)
 
-> b) [Face detection offline](https://github.com/Jay-prakashpandey/Projects/tree/main/face_detection_offline)
+> a) [Weather iot-project] (https://github.com/Jay-prakashpandey/Projects/tree/main/Weather_Iot)
+
+> b) [Face_mask detector App](https://github.com/Jay-prakashpandey/Projects/tree/main/face_mask_detection)
+
+> c) [Face detection offline](https://github.com/Jay-prakashpandey/Projects/tree/main/face_detection_offline)
 
 > c) [Face detection online](https://github.com/Jay-prakashpandey/Projects/tree/main/LGMVIP_Android/face_detection)
 
