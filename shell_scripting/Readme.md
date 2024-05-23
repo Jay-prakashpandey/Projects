@@ -1,7 +1,67 @@
 # This is little exercise for bash-script
 ##    A1: Write a script for printing all file related information in present working directory (e.g.: size, permission & size etc…)
+        Prerequisites:
+
+        How to execute a bash script.
+        How to change execute permission of a file.
+        How read man-page of a command.
+        Objective:
+
+        To understand how to write and execute a basic bash script
+        Requirements:
+
+        When you run the script, display all file information from current working directory
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image.png)
 ##    A2: Read ‘n’ and generate a pattern given below
+        Pattern
+
+        1
+        1 2
+        1 2 3
+        1 2 3 4
+
+        Prerequisites:
+
+        How to run a loops in shell scripts.
+        How to execute a bash script.
+        How to change execute permission of a file.
+        Objective:
+
+        To understand the working of loops in a script.
+        Requirements:
+
+        Read a value from user
+        Create a pattern as mentioned above
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-1.png)
+
 ##    A3: Read ‘n’ and generate a pattern given below
+        Pattern
+
+        1
+        2 3
+        4 5 6
+        7 8 9 10
+
+        Prerequisites:
+
+        How to run a loops in shell scripts.
+        How to execute a bash script.
+        How to change execute permission of a file.
+        Objective:
+
+        To understand the working of loops in a script.
+        Requirements:
+
+        Read a value from user
+        Create a pattern as mentioned above
+        Sample Execution / Output:
+        ![alt text](image-2.png)
 ##    A4: Write a script for scp & ssh by demonstrating remote login & file transfer functions
 ##    A5: Write a script for addition of two numbers for real numbers also
 ##    A6: Write a script for arithmetic calculator using command line arguments
