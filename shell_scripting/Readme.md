@@ -87,12 +87,32 @@
 
         Test Case 1:
         ![alt text](image-4.png)
+        ![image](https://github.com/Jay-prakashpandey/Projects/assets/81908427/8c28154f-cae7-4ef8-9033-b7eb65ccbc1c)
+
 
         Test case 2:
         ![alt text](image-3.png)
 
 
 ##    A5: Write a script for addition of two numbers for real numbers also
+        Prerequisites:
+        
+        How to add real numbers in script.
+        How to use piping in commands.
+        Objective:
+        
+        To understand working of piping.
+        To learn arithmetic operations in shell script
+        Requirements:
+        
+        Ask user to enter two numbers
+        User can enter real numbers also
+        Use bc command and piping to do
+        Sample Execution / Output:
+        
+        Test Case 1:
+        ![image](https://github.com/Jay-prakashpandey/Projects/assets/81908427/ff1835a6-589f-4f8a-815d-48b12751d46a)
+
 ##    A6: Write a script for arithmetic calculator using command line arguments
 ##    A7: Write a script to compare larger integer values from a ‘n’ number of arguments using command line arguments
 ##    A8: Write a script to print a given number in reverse order
