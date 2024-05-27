@@ -19,18 +19,30 @@
 ## 2. Shell Scripting
 
 > a) 
-> b) [A1: Write a script for printing all file related information in present working directory (e.g.: size, permission & size etc…)]
-> c) [A2: Read ‘n’ and generate a pattern given below]
-> d) [A3: Read ‘n’ and generate a pattern given below]
-> e) [A4: Write a script for scp & ssh by demonstrating remote login & file transfer functions]
-> f) [A5: Write a script for addition of two numbers for real numbers also]
-> g) [A6: Write a script for arithmetic calculator using command line arguments]
-> h) [A7: Write a script to compare larger integer values from a ‘n’ number of arguments using command line arguments]
-> i) [A8: Write a script to print a given number in reverse order]
-> j) [A9: Write a script to delete empty lines from a file]
-> k) [A10: Write a script to perform arithmetic operation on digits of a given number depending upon the operator]
-> l) [A11: Read ‘n’ and generate Fibonacci numbers less than or equal to n]
-> m) [A12: Write a script to print the length of each and every string using arrays]
+> b) [A1: Write a script for printing all file related information in present working directory (e.g.: size, permission & size etc…)](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A1.sh)
+
+> c) [A2: Read ‘n’ and generate a pattern given below](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A2.sh)
+
+> d) [A3: Read ‘n’ and generate a pattern given below](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A3.sh)
+
+> e) [A4: Write a script for scp & ssh by demonstrating remote login & file transfer functions](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A4.sh)
+
+> f) [A5: Write a script for addition of two numbers for real numbers also](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A5.sh)
+
+> g) [A6: Write a script for arithmetic calculator using command line arguments](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A6.sh)
+
+> h) [A7: Write a script to compare larger integer values from a ‘n’ number of arguments using command line arguments](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A7.sh)
+
+> i) [A8: Write a script to print a given number in reverse order](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A8.sh)
+
+> j) [A9: Write a script to delete empty lines from a file](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A9.sh)
+
+> k) [A10: Write a script to perform arithmetic operation on digits of a given number depending upon the operator](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A10.sh)
+
+> l) [A11: Read ‘n’ and generate Fibonacci numbers less than or equal to n](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A2.sh)
+
+> m) [A12: Write a script to print the length of each and every string using arrays](https://github.com/Jay-prakashpandey/Projects/blob/9d49509615d11d08739302ee6d641778e4f7e429/shell_scripting/A2.sh)
+
 > n) [A13: Write a script to print chess board]
 > o) [A14: Write a script to sort a given number in ascending or descending order]
 > p) [A15: Write a script to print the following system information]
