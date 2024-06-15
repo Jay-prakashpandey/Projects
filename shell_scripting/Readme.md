@@ -120,14 +120,167 @@
 ##    A11: Read ‘n’ and generate Fibonacci numbers less than or equal to n
 ##    A12: Write a script to print the length of each and every string using arrays
 ##    A13: Write a script to print chess board
+        ![alt text](image-6.png)
 ##    A14: Write a script to sort a given number in ascending or descending order
+        Prerequisites:
+
+        Knowledge about arrays.
+        Bubble sort.
+        Objective:
+
+        Learn about sorting mechanisms.
+        Better array manipulations.
+        Requirements:
+
+        Pass numbers through command-line arguments.
+        Provide a menu for user to choose ascending or descending.
+        Show sorted array according to user choice.
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-7.png)
 ##    A15: Write a script to print the following system information
+        Currently logged users
+        Your shell directory
+        Home directory
+        OS name & version
+        Current working directory
+        Number of users logged in
+        Show all available shells in your system
+        Hard disk information
+        CPU information
+        Memory information
+        File system information
+        Currently running process
+        Prerequisites:
+
+        Knowledge about user commands w, who, whoami
+        Bash environmental variables.
+        /proc file-system
+        Other system info commands like df, du, uname, ps.
+        Objective:
+
+        To learn system information commands
+        Requirements:
+
+        Provide a menu for user about what information he wants to check
+        Using switch case display output for selected option.
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-8.png)
+
+        Test Case 2:
+        ![alt text](image-9.png)
+
 ##    A16: Read ‘n’ and print the greatest Fibonacci number less than or equal to n
+        Prerequisites:
+
+        Knowledge about Fibonacci series.
+        Objective:
+
+        Learn to implement existing algorithms using loops
+        Requirements:
+
+        Remember n is not nth number of series.
+        Its the its the greatest element to print.
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-10.png)
+
 ##    A17: Write a script to rename a file/directory replaced by lower/upper case letters
+        Prerequisites:
+
+        Knowledge about mv and tr commands.
+        To check a file type in script.
+        WARNING: Dont try this in your home/ or assignment/ directory.
+        Please create a seperate directory to test this script.
+
+        
+
+        Objective:
+
+        To learn filter/translate commands
+        Identifying file types in script
+        Requirements:
+
+        Rename all files from current directory to lowercase letters.
+        Rename all directories from current directories to uppercase.
+        Digits and other symbols should remain same.
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-11.png)
+
+        Test Case 2:
+        ![alt text](image-12.png)
+
+
 ##    A18: Write a script to rename current working directory with given name
+        Prerequisites:
+
+        Knowledge about mv and tr commands.
+        WARNING: Dont try this in your home/ or assignmen/ directory.
+        Please create a seperate directory to test this script.
+
+        
+
+        Objective:
+
+        To learn filter/translate commands
+        Requirements:
+
+        After execting this script your current directory will be renamed to given name
+        Pass new name through command-line.
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-13.png)
+
 ##    A19: Given album name and directory create a script to name files properly by inserting index numbers.
+        Prerequisites:
+
+        Knowledge about mv and tr commands.
+        WARNING: Dont try this in your home/ or assignmen/ directory.
+        Please create a separate directory to test this script.
+
+        
+
+        Objective:
+
+        To learn filter/translate commands
+        Requirements:
+
+        Aim of this project is to rename all files in one directory with a common name and indexing.
+        Usually when we takes pics in camera or mobile default names are like DSN001.jpg, DSN002.jpg
+        These files need to be renamed by user given prefix name
+        Prefix name pass through command-line argument.
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-14.png)
 ##    A20: Write script to print contents of file from given line number to next given number of lines
+        Prerequisites:
+
+        Piping in shell
+        head and tail commands
+        Objective:
+
+        To learn about file filter commands.
+        Requirements:
+
+        Pass three command-line arguments
+        1- starting line number
+        2-number of lines and filename
+        Script will print n lines from given starting line
+        Sample Execution / Output:
+
+        Test Case 1:
+        ![alt text](image-15.png)
+
 ##    A21: Write script called say_hello, which will print greetings based on time
+
 ##    A22: Shell script to convert string lower to upper and upper to lower
 ##    A23: Display the longest and shortest user-names on the system
 ##    A24: Write a script to delete all the .swp files found in your system or directory
