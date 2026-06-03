@@ -1,0 +1,24 @@
+R_DEF: Internal format may change without notice
+local
+color accent_color
+color primary_color
+color primary_dark_color
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+string custom_layout
+string invoice_template
+string preview
+string receipt_with_tax
+string save_share
+string select_files
+string select_template
+string standard_receipt
+string start_merging
+string welcome
+style Theme.ReceiptMerger
+xml backup_rules
+xml data_extraction_rules
+xml file_paths

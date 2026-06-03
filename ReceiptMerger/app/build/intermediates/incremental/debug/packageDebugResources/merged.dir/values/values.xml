@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent_color">#4CAF50</color>
+    <color name="primary_color">#006E40</color>
+    <color name="primary_dark_color">#004D2D</color>
+    <string name="app_name">ReceiptMerger</string>
+    <string name="custom_layout">Custom Layout</string>
+    <string name="invoice_template">Invoice Template</string>
+    <string name="preview">Preview</string>
+    <string name="receipt_with_tax">Receipt with Tax</string>
+    <string name="save_share">Save &amp; Share</string>
+    <string name="select_files">Select Files</string>
+    <string name="select_template">Select Template</string>
+    <string name="standard_receipt">Standard Receipt</string>
+    <string name="start_merging">Start Merging</string>
+    <string name="welcome">Welcome to Receipt Merger</string>
+    <style name="Theme.ReceiptMerger" parent="android:Theme.Material.Light.DarkActionBar">
+        
+        <item name="android:colorPrimary">@color/primary_color</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark_color</item>
+        <item name="android:colorAccent">@color/accent_color</item>
+    </style>
+</resources>
