@@ -1,9 +1,7 @@
 package com.receiptmerger.app.ui.screens
 
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +14,6 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,18 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.receiptmerger.app.data.db.ReceiptMergerDatabase
-import com.receiptmerger.app.ui.components.ConfirmDialog
 import com.receiptmerger.app.ui.components.ErrorDialog
 import com.receiptmerger.app.ui.navigation.Screen
-import com.receiptmerger.app.utils.FileUtils
 import com.receiptmerger.app.utils.PermissionUtils
 import com.receiptmerger.app.utils.ShareUtils
 import com.receiptmerger.app.viewmodel.ReceiptMergerViewModel
-import androidx.core.content.FileProvider
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,8 +40,6 @@ fun SaveShareScreen(navController: NavController, viewModel: ReceiptMergerViewMo
     val context = LocalContext.current
 
     val generatedPdfPath by viewModel.generatedPdfPath.collectAsState()
-    val fileName = remember { mutableStateOf("merged_receipt.pdf") }
-    val showSaveConfirm = remember { mutableStateOf(false) }
     val showError = remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -73,22 +62,14 @@ fun SaveShareScreen(navController: NavController, viewModel: ReceiptMergerViewMo
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Save Your Merged PDF",
+                "PDF Ready",
                 style = MaterialTheme.typography.headlineSmall
             )
 
-            OutlinedTextField(
-                value = fileName.value,
-                onValueChange = { fileName.value = it.replace(".pdf", "") },
-                label = { Text("File Name") },
-                modifier = Modifier.fillMaxWidth(),
-                suffix = { Text(".pdf") }
-            )
-
             Text(
-                "Choose how to proceed:",
+                generatedPdfPath?.let { File(it).name }.orEmpty(),
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 8.dp)
             )
 
             Column(
@@ -99,31 +80,20 @@ fun SaveShareScreen(navController: NavController, viewModel: ReceiptMergerViewMo
             ) {
                 ElevatedButton(
                     onClick = {
-                        showSaveConfirm.value = true
+                        generatedPdfPath?.let { path ->
+                            ShareUtils.openPdf(context, path)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Save to Downloads")
+                    Text("Open PDF")
                 }
 
                 ElevatedButton(
                     onClick = {
                         generatedPdfPath?.let { path ->
                             try {
-                                val file = File(path)
-                                val uri = FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.provider",
-                                    file
-                                )
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "application/pdf"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(
-                                    Intent.createChooser(shareIntent, "Share PDF")
-                                )
+                                ShareUtils.sharePdf(context, path)
                             } catch (e: Exception) {
                                 showError.value = "Failed to share: ${e.message}"
                             }
@@ -147,53 +117,18 @@ fun SaveShareScreen(navController: NavController, viewModel: ReceiptMergerViewMo
             }
 
             Text(
-                "File will be saved to: ${PermissionUtils.getDownloadsDirectory(context).absolutePath}",
+                "Saved in: ${PermissionUtils.getDownloadsDirectory(context).absolutePath}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        if (showSaveConfirm.value) {
-            ConfirmDialog(
-                title = "Save PDF",
-                message = "Save '${fileName.value}.pdf' to Downloads folder?",
-                onConfirm = {
-                    generatedPdfPath?.let { path ->
-                        try {
-                            val downloadDir = PermissionUtils.getDownloadsDirectory(context)
-                            downloadDir.mkdirs()
-                            val sourceFile = File(path)
-                            val destFile = File(downloadDir, "${fileName.value}.pdf")
-                            
-                            sourceFile.inputStream().use { input ->
-                                destFile.outputStream().use { output ->
-                                    input.copyTo(output)
-                                }
-                            }
-                            
-                            showError.value = "PDF saved successfully to:\n${destFile.absolutePath}"
-                        } catch (e: Exception) {
-                            showError.value = "Failed to save: ${e.message}"
-                        }
-                    }
-                    showSaveConfirm.value = false
-                },
-                onCancel = {
-                    showSaveConfirm.value = false
-                }
-            )
-        }
-
         if (showError.value != null) {
             ErrorDialog(
-                title = if (showError.value?.contains("successfully") == true) "Success" else "Error",
+                title = "Error",
                 message = showError.value.orEmpty(),
                 onDismiss = {
                     showError.value = null
-                    if (showError.value?.contains("successfully") == true) {
-                        viewModel.reset()
-                        navController.popBackStack(Screen.Home.route, false)
-                    }
                 }
             )
         }

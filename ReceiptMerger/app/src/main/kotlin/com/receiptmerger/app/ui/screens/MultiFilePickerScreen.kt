@@ -1,6 +1,5 @@
 package com.receiptmerger.app.ui.screens
 
-import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +14,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -27,12 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.receiptmerger.app.data.db.ReceiptMergerDatabase
 import com.receiptmerger.app.ui.components.EmptyStateMessage
 import com.receiptmerger.app.ui.components.ErrorDialog
 import com.receiptmerger.app.ui.components.FileListItem
@@ -47,6 +43,8 @@ fun MultiFilePickerScreen(navController: NavController, viewModel: ReceiptMerger
 
     val selectedFiles by viewModel.selectedFiles.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val currentTemplate by viewModel.currentTemplate.collectAsState()
+    val receiptsPerPage = if (currentTemplate == "collage2") 2 else 3
 
     val permissions = rememberMultiplePermissionsState(
         permissions = PermissionUtils.getRequiredPermissions().toList()
@@ -80,7 +78,7 @@ fun MultiFilePickerScreen(navController: NavController, viewModel: ReceiptMerger
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Select receipts or images to merge",
+                "Select receipt PDFs or images (${receiptsPerPage} per A4 page)",
                 style = MaterialTheme.typography.bodyMedium
             )
 
@@ -100,7 +98,7 @@ fun MultiFilePickerScreen(navController: NavController, viewModel: ReceiptMerger
             if (selectedFiles.isEmpty()) {
                 EmptyStateMessage(
                     title = "No Files Selected",
-                    subtitle = "Tap 'Pick Files' to start adding receipts or images",
+                    subtitle = "Tap 'Pick Files' to add receipt PDFs or images",
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -127,7 +125,7 @@ fun MultiFilePickerScreen(navController: NavController, viewModel: ReceiptMerger
                 enabled = selectedFiles.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Generate PDF")
+                Text("Generate ${receiptsPerPage} per A4 (${selectedFiles.size} files)")
             }
         }
 

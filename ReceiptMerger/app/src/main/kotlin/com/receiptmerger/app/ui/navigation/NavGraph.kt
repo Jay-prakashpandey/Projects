@@ -11,6 +11,7 @@ import com.receiptmerger.app.ui.screens.TemplateSelectionScreen
 import com.receiptmerger.app.ui.screens.MultiFilePickerScreen
 import com.receiptmerger.app.ui.screens.PdfPreviewScreen
 import com.receiptmerger.app.ui.screens.SaveShareScreen
+import com.receiptmerger.app.ui.screens.SavedPdfsScreen
 import com.receiptmerger.app.viewmodel.ReceiptMergerViewModel
 import com.receiptmerger.app.viewmodel.ReceiptMergerViewModelFactory
 
@@ -24,7 +25,7 @@ fun NavGraph(database: ReceiptMergerDatabase) {
 
     NavHost(navController = navController, startDestination = Screen.Home.route) {
         composable(Screen.Home.route) {
-            HomeScreen(navController = navController)
+            HomeScreen(navController = navController, viewModel = viewModel)
         }
         composable(Screen.TemplateSelection.route) {
             TemplateSelectionScreen(navController = navController, viewModel = viewModel)
@@ -37,6 +38,9 @@ fun NavGraph(database: ReceiptMergerDatabase) {
         }
         composable(Screen.SaveShare.route) {
             SaveShareScreen(navController = navController, viewModel = viewModel)
+        }
+        composable(Screen.SavedPdfs.route) {
+            SavedPdfsScreen(navController = navController)
         }
     }
 }

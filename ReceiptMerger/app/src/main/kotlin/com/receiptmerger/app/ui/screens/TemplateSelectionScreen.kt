@@ -20,6 +20,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,33 +37,19 @@ import com.receiptmerger.app.viewmodel.ReceiptMergerViewModel
 fun TemplateSelectionScreen(navController: NavController, viewModel: ReceiptMergerViewModel) {
     val templates = listOf(
         TemplateOption(
-            id = "standard",
-            title = "Standard Receipt",
-            description = "Simple receipt format with item list and total"
+            id = "collage3",
+            title = "3 Receipts per A4",
+            description = "Three cropped sub-orders on each A4 page"
         ),
         TemplateOption(
-            id = "image_merge",
-            title = "Image to PDF",
-            description = "Convert images into a single PDF document"
-        ),
-        TemplateOption(
-            id = "pdf_merge",
-            title = "PDF Merge",
-            description = "Merge multiple PDF files into one"
-        ),
-        TemplateOption(
-            id = "invoice",
-            title = "Invoice Template",
-            description = "Professional invoice format with company info"
-        ),
-        TemplateOption(
-            id = "receipt_tax",
-            title = "Receipt with Tax",
-            description = "Receipt format including tax calculations"
+            id = "collage2",
+            title = "2 Receipts per A4",
+            description = "Two cropped sub-orders on each A4 page"
         ),
     )
 
-    val selectedTemplate = remember { mutableStateOf<String?>(null) }
+    val currentTemplate by viewModel.currentTemplate.collectAsState()
+    val selectedTemplate = remember { mutableStateOf<String?>(currentTemplate) }
 
     val onTemplateSelected = { id: String ->
         selectedTemplate.value = id
@@ -71,7 +59,7 @@ fun TemplateSelectionScreen(navController: NavController, viewModel: ReceiptMerg
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Template") },
+                title = { Text("Choose Template") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -88,7 +76,7 @@ fun TemplateSelectionScreen(navController: NavController, viewModel: ReceiptMerg
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Choose a template for your merged document",
+                "Choose how many receipts to place on each A4 page",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -110,7 +98,7 @@ fun TemplateSelectionScreen(navController: NavController, viewModel: ReceiptMerg
 
             Button(
                 onClick = { navController.navigate(Screen.MultiFilePicker.route) },
-                enabled = selectedTemplate.value != null,
+                enabled = true,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Continue")

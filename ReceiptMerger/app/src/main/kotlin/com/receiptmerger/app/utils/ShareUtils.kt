@@ -7,6 +7,26 @@ import androidx.core.content.FileProvider
 import java.io.File
 
 object ShareUtils {
+    fun openPdf(context: Context, pdfPath: String) {
+        try {
+            val file = File(pdfPath)
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+
+            val openIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            context.startActivity(Intent.createChooser(openIntent, "Open PDF"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     fun sharePdf(context: Context, pdfPath: String) {
         try {
             val file = File(pdfPath)

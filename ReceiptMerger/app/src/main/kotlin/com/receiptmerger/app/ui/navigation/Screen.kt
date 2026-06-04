@@ -6,4 +6,5 @@ sealed class Screen(val route: String) {
     data object MultiFilePicker : Screen("multi_file_picker")
     data object PdfPreview : Screen("pdf_preview")
     data object SaveShare : Screen("save_share")
+    data object SavedPdfs : Screen("saved_pdfs")
 }

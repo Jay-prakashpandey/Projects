@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -23,17 +22,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.receiptmerger.app.ui.navigation.Screen
+import com.receiptmerger.app.viewmodel.ReceiptMergerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, viewModel: ReceiptMergerViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Receipt Merger") })
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(Screen.TemplateSelection.route) }
+                onClick = {
+                    viewModel.reset()
+                    navController.navigate(Screen.TemplateSelection.route)
+                }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "New Project")
             }
@@ -55,13 +58,16 @@ fun HomeScreen(navController: NavController) {
             )
             
             Text(
-                "Merge multiple receipts and images into a single PDF document",
+                "Create 2-per-A4 or 3-per-A4 receipt PDFs",
                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
 
             ElevatedButton(
-                onClick = { navController.navigate(Screen.TemplateSelection.route) },
+                onClick = {
+                    viewModel.reset()
+                    navController.navigate(Screen.TemplateSelection.route)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)
@@ -69,11 +75,11 @@ fun HomeScreen(navController: NavController) {
                 Text("Create New Project")
             }
 
-            Button(
-                onClick = { /* TODO: Load recent project */ },
+            ElevatedButton(
+                onClick = { navController.navigate(Screen.SavedPdfs.route) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Recent Projects")
+                Text("Previously Created PDFs")
             }
         }
     }

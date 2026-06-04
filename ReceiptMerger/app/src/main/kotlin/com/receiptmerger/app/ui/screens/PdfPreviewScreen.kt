@@ -28,12 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.receiptmerger.app.data.db.ReceiptMergerDatabase
 import com.receiptmerger.app.ui.components.ErrorDialog
-import com.receiptmerger.app.ui.components.LoadingDialog
 import com.receiptmerger.app.ui.components.ProgressBar
 import com.receiptmerger.app.ui.navigation.Screen
 import com.receiptmerger.app.viewmodel.ReceiptMergerViewModel
@@ -50,6 +46,8 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
     val progress by viewModel.processingProgress.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val generatedPdfPath by viewModel.generatedPdfPath.collectAsState()
+    val currentTemplate by viewModel.currentTemplate.collectAsState()
+    val receiptsPerPage = if (currentTemplate == "collage2") 2 else 3
 
     val projectName = remember {
         mutableStateOf(
@@ -150,12 +148,12 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
             Button(
                 onClick = {
                     val outputDir = context.cacheDir
-                    viewModel.generatePdf(context, outputDir, projectName.value)
+                    viewModel.generateCollagePdf(context, outputDir, projectName.value)
                 },
                 enabled = !isProcessing && generatedPdfPath == null,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Generate PDF")
+                Text("Generate ${receiptsPerPage} per A4 PDF")
             }
 
             if (generatedPdfPath != null) {
@@ -176,7 +174,7 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
                 onRetry = {
                     viewModel.clearError()
                     val outputDir = context.cacheDir
-                    viewModel.generatePdf(context, outputDir, projectName.value)
+                    viewModel.generateCollagePdf(context, outputDir, projectName.value)
                 }
             )
         }
