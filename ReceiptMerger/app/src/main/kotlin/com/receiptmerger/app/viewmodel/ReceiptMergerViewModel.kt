@@ -31,11 +31,30 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
     private val _selectedFiles = MutableStateFlow<List<FileItem>>(emptyList())
     val selectedFiles = _selectedFiles.asStateFlow()
 
+    // Settings and Config
+    private val _pdfQuality = MutableStateFlow(100)
+    val pdfQuality = _pdfQuality.asStateFlow()
+
+    private val _userSignature = MutableStateFlow<String?>(null)
+    val userSignature = _userSignature.asStateFlow()
+
+    private val _userSignatureImageUri = MutableStateFlow<Uri?>(null)
+    val userSignatureImageUri = _userSignatureImageUri.asStateFlow()
+
+    private val _gridRows = MutableStateFlow(2)
+    val gridRows = _gridRows.asStateFlow()
+
+    private val _gridCols = MutableStateFlow(2)
+    val gridCols = _gridCols.asStateFlow()
+
     private val _isProcessing = MutableStateFlow(false)
     val isProcessing = _isProcessing.asStateFlow()
 
     private val _processingProgress = MutableStateFlow(0f)
     val processingProgress = _processingProgress.asStateFlow()
+
+    private val _selectedProjectIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedProjectIds = _selectedProjectIds.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
@@ -48,6 +67,57 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
 
     fun setTemplate(template: String) {
         _currentTemplate.value = template
+    }
+
+    fun setQuality(quality: Int) {
+        _pdfQuality.value = quality
+    }
+
+    fun setSignature(signature: String?) {
+        _userSignature.value = if (signature.isNullOrBlank()) null else signature
+    }
+
+    fun setSignatureImage(uri: Uri?) {
+        _userSignatureImageUri.value = uri
+    }
+
+    fun setGridDimensions(rows: Int, cols: Int) {
+        _gridRows.value = rows
+        _gridCols.value = cols
+    }
+
+    fun toggleProjectSelection(projectId: String) {
+        val current = _selectedProjectIds.value.toMutableSet()
+        if (current.contains(projectId)) current.remove(projectId) else current.add(projectId)
+        _selectedProjectIds.value = current
+    }
+
+    fun selectAllProjects() {
+        _selectedProjectIds.value = _allProjects.value.map { it.id }.toSet()
+    }
+
+    fun clearProjectSelection() {
+        _selectedProjectIds.value = emptySet()
+    }
+
+    fun deleteSelectedProjects() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val toDelete = _allProjects.value.filter { _selectedProjectIds.value.contains(it.id) }
+            toDelete.forEach { project ->
+                project.outputPath.takeIf { it.isNotEmpty() }?.let { File(it).delete() }
+                database?.projectDao()?.deleteProject(project)
+            }
+            _selectedProjectIds.value = emptySet()
+            loadProjects()
+        }
+    }
+
+    fun deleteProject(project: MergeProjectEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            project.outputPath.takeIf { it.isNotEmpty() }?.let { File(it).delete() }
+            database?.projectDao()?.deleteProject(project)
+            loadProjects()
+        }
     }
 
     fun receiptsPerPage(): Int {
@@ -92,6 +162,7 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
             _isProcessing.value = true
             _errorMessage.value = null
             _processingProgress.value = 0f
+            val cachedFiles = mutableListOf<File>()
 
             try {
                 val files = _selectedFiles.value
@@ -106,7 +177,6 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                 val outputPath = File(outputDir, "$projectName.pdf").absolutePath
 
                 // Copy files to cache first
-                val cachedFiles = mutableListOf<File>()
                 files.forEachIndexed { index, file ->
                     val cached = FileUtils.copyToCache(context, file.uri, "${index}_${file.name}")
                     if (cached != null) {
@@ -154,7 +224,10 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                                 files.map { it.uri },
                                 outputPath,
                                 _currentTemplate.value,
-                                projectName
+                                projectName,
+                                _userSignature.value,
+                                _userSignatureImageUri.value,
+                                _pdfQuality.value
                             )
                         }
                     }
@@ -163,13 +236,29 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                             _errorMessage.value = "Selected PDF files cannot be converted using the current template. Use PDF Merge instead."
                             false
                         } else {
-                            AdvancedPdfGenerator.createReceiptPdfFromImages(
-                                context,
-                                files.map { it.uri },
-                                outputPath,
-                                _currentTemplate.value,
-                                projectName
-                            )
+                            if (_currentTemplate.value == "grid_rc") {
+                                AdvancedPdfGenerator.createGridPdfFromImages(
+                                    context,
+                                    files.map { it.uri },
+                                    outputPath,
+                                    _gridRows.value,
+                                    _gridCols.value,
+                                    _userSignature.value,
+                                    _userSignatureImageUri.value,
+                                    _pdfQuality.value
+                                )
+                            } else {
+                                AdvancedPdfGenerator.createReceiptPdfFromImages(
+                                    context,
+                                    files.map { it.uri },
+                                    outputPath,
+                                    _currentTemplate.value,
+                                    projectName,
+                                    _userSignature.value,
+                                    _userSignatureImageUri.value,
+                                    _pdfQuality.value
+                                )
+                            }
                         }
                     }
                 }
@@ -203,13 +292,12 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                 } else if (_errorMessage.value.isNullOrBlank()) {
                     _errorMessage.value = "Failed to generate PDF"
                 }
-
-                // Clean up cache
-                cachedFiles.forEach { FileUtils.deleteFile(it) }
             } catch (e: Exception) {
                 _errorMessage.value = "Error: ${e.message}"
                 e.printStackTrace()
             } finally {
+                // Clean up cache always, even on error
+                cachedFiles.forEach { FileUtils.deleteFile(it) }
                 _isProcessing.value = false
             }
         }
@@ -239,8 +327,7 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
 
                 val projectId = System.currentTimeMillis().toString()
                 val generationResult = withContext(Dispatchers.IO) {
-                    val receiptsFolder = PermissionUtils.getDownloadsDirectory(context)
-                    receiptsFolder.mkdirs()
+                    outputDir.mkdirs()
 
                     val cachedFiles = mutableListOf<File>()
                     files.forEachIndexed { index, file ->
@@ -259,13 +346,16 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                         )
                     }
 
-                    val outputPath = File(receiptsFolder, "${projectName}_${receiptsPerPage}_per_A4.pdf").absolutePath
+                    val outputPath = File(outputDir, "${projectName}_${receiptsPerPage}_per_A4.pdf").absolutePath
                     val success = AdvancedPdfGenerator.createA4CollagePdf(
                         context = context,
                         receiptPaths = cachedFiles.map { it.absolutePath },
                         outputPath = outputPath,
                         tolerance = 10,
-                        receiptsPerPage = receiptsPerPage
+                        receiptsPerPage = receiptsPerPage,
+                        signature = _userSignature.value,
+                        signatureImageUri = _userSignatureImageUri.value,
+                        quality = _pdfQuality.value
                     )
 
                     CollageGenerationResult(

@@ -40,7 +40,7 @@ fun NavGraph(database: ReceiptMergerDatabase) {
             SaveShareScreen(navController = navController, viewModel = viewModel)
         }
         composable(Screen.SavedPdfs.route) {
-            SavedPdfsScreen(navController = navController)
+            SavedPdfsScreen(navController = navController, viewModel = viewModel)
         }
     }
 }

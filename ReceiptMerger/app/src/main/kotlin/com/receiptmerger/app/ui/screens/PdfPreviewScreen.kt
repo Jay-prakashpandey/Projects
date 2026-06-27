@@ -47,7 +47,11 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
     val errorMessage by viewModel.errorMessage.collectAsState()
     val generatedPdfPath by viewModel.generatedPdfPath.collectAsState()
     val currentTemplate by viewModel.currentTemplate.collectAsState()
-    val receiptsPerPage = if (currentTemplate == "collage2") 2 else 3
+    
+    val gridRows by viewModel.gridRows.collectAsState()
+    val gridCols by viewModel.gridCols.collectAsState()
+
+    val receiptsPerPage = if (currentTemplate == "grid_rc") gridRows * gridCols else if (currentTemplate == "collage2") 2 else 3
 
     val projectName = remember {
         mutableStateOf(
@@ -148,12 +152,21 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
             Button(
                 onClick = {
                     val outputDir = context.cacheDir
-                    viewModel.generateCollagePdf(context, outputDir, projectName.value)
+                    if (currentTemplate.startsWith("collage")) {
+                        viewModel.generateCollagePdf(context, outputDir, projectName.value)
+                    } else {
+                        viewModel.generatePdf(context, outputDir, projectName.value)
+                    }
                 },
                 enabled = !isProcessing && generatedPdfPath == null,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Generate ${receiptsPerPage} per A4 PDF")
+                val label = if (currentTemplate == "grid_rc") {
+                    "Generate ${gridRows}x${gridCols} Grid PDF"
+                } else {
+                    "Generate ${receiptsPerPage} per A4 PDF"
+                }
+                Text(label)
             }
 
             if (generatedPdfPath != null) {
@@ -174,7 +187,11 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
                 onRetry = {
                     viewModel.clearError()
                     val outputDir = context.cacheDir
-                    viewModel.generateCollagePdf(context, outputDir, projectName.value)
+                    if (currentTemplate.startsWith("collage")) {
+                        viewModel.generateCollagePdf(context, outputDir, projectName.value)
+                    } else {
+                        viewModel.generatePdf(context, outputDir, projectName.value)
+                    }
                 }
             )
         }

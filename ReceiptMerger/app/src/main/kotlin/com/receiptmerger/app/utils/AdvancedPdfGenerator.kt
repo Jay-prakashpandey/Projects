@@ -2,9 +2,13 @@ package com.receiptmerger.app.utils
 
 import android.content.Context
 import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import java.io.ByteArrayOutputStream
 import com.itextpdf.io.image.ImageDataFactory
 import com.itextpdf.kernel.geom.PageSize
 import com.itextpdf.io.font.constants.StandardFonts
+import com.itextpdf.io.font.PdfEncodings
 import com.itextpdf.kernel.font.PdfFontFactory
 import com.itextpdf.kernel.pdf.PdfDocument
 import com.itextpdf.kernel.pdf.PdfReader
@@ -15,6 +19,8 @@ import com.itextpdf.kernel.utils.PdfMerger
 import com.itextpdf.layout.Document
 import com.itextpdf.layout.element.Image
 import com.itextpdf.layout.element.Paragraph
+import com.itextpdf.layout.properties.VerticalAlignment
+import com.itextpdf.layout.properties.HorizontalAlignment
 import com.itextpdf.layout.properties.TextAlignment
 import java.io.File
 import java.io.FileInputStream
@@ -65,6 +71,9 @@ object AdvancedPdfGenerator {
         outputPath: String,
         templateType: String = "standard",
         title: String = "Receipt",
+        signature: String? = null,
+        signatureImageUri: Uri? = null,
+        quality: Int = 100
     ): Boolean {
         return try {
             val output = File(outputPath)
@@ -98,16 +107,33 @@ object AdvancedPdfGenerator {
             // Add images
             imageUris.forEach { uri ->
                 try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    inputStream?.use { stream ->
-                        val imageData = ImageDataFactory.create(stream.readBytes())
-                        val image = Image(imageData)
-                        
-                        // Scale to fit A4 width with margins
-                        image.scaleToFit(550f, 700f)
-                        document.add(image)
-                        document.add(Paragraph("\n"))
+                    val imageData = getImageDataWithQuality(context, uri, quality)
+                    val image = Image(imageData)
+                    
+                    // Scale to fit A4 width with margins
+                    image.scaleToFit(550f, 650f)
+                    image.setHorizontalAlignment(HorizontalAlignment.CENTER)
+                    document.add(image)
+
+                    signatureImageUri?.let { sigUri ->
+                        val sigImageData = getImageDataWithQuality(context, sigUri, quality)
+                        val sigImage = Image(sigImageData)
+                        sigImage.scaleToFit(252f, 100f) // Business card width, max height for logo
+                        sigImage.setHorizontalAlignment(HorizontalAlignment.CENTER)
+                        sigImage.setMarginTop(10f)
+                        document.add(sigImage)
                     }
+
+                    // Add individual text signature per image
+                    signature?.let { text ->
+                        document.add(Paragraph(text)
+                            .setFontSize(12f)
+                            .setItalic()
+                            .setTextAlignment(TextAlignment.CENTER)
+                            .setMarginTop(5f))
+                    }
+
+                    document.add(Paragraph("\n"))
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -136,6 +162,9 @@ object AdvancedPdfGenerator {
         outputPath: String,
         tolerance: Int = 10,
         receiptsPerPage: Int = 3,
+        signature: String? = null,
+        signatureImageUri: Uri? = null,
+        quality: Int = 100
     ): Boolean {
         if (receiptPaths.isEmpty()) return false
 
@@ -173,6 +202,9 @@ object AdvancedPdfGenerator {
                         slotWidth = slotWidth,
                         slotHeight = slotHeight,
                         tolerance = tolerance,
+                        signature = signature,
+                        signatureImageUri = signatureImageUri,
+                        quality = quality
                     )
                 }
             }
@@ -185,6 +217,100 @@ object AdvancedPdfGenerator {
         }
     }
 
+    /**
+     * Create a grid layout (Rows x Columns) PDF
+     */
+    fun createGridPdfFromImages(
+        context: Context,
+        imageUris: List<Uri>,
+        outputPath: String,
+        rows: Int,
+        cols: Int,
+        signature: String? = null,
+        signatureImageUri: Uri? = null,
+        quality: Int = 100
+    ): Boolean {
+        return try {
+            val output = File(outputPath)
+            output.parentFile?.mkdirs()
+
+            val pdfWriter = PdfWriter(FileOutputStream(output))
+            val pdfDocument = PdfDocument(pdfWriter)
+            val document = Document(pdfDocument, PageSize.A4)
+            
+            val pageSize = PageSize.A4
+            val margin = 20f
+            val availableWidth = pageSize.width - (margin * 2f)
+            val availableHeight = pageSize.height - (margin * 2f)
+            
+            val cellWidth = availableWidth / cols
+            val cellHeight = availableHeight / rows
+
+            imageUris.forEachIndexed { index, uri ->
+                val posInPage = index % (rows * cols)
+                
+                if (index > 0 && posInPage == 0) pdfDocument.addNewPage()
+                
+                val r = posInPage / cols
+                val c = posInPage % cols
+                
+                val textSigHeight = if (signature != null) 34f else 0f
+                val sigHeight = if (signatureImageUri != null) 100f else 0f
+                val gap = if (signatureImageUri != null || signature != null) 10f else 0f
+                val adjustedCellHeight = cellHeight - sigHeight - textSigHeight - gap
+
+                val cellX = margin + (c * cellWidth)
+                val cellY = pageSize.height - margin - ((r + 1) * cellHeight)
+
+                val imageData = getImageDataWithQuality(context, uri, quality)
+                val image = Image(imageData)
+                
+                val scale = min(cellWidth / imageData.width, adjustedCellHeight / imageData.height)
+                image.scaleAbsolute(imageData.width * scale, imageData.height * scale)
+                
+                val x = cellX + (cellWidth - image.imageScaledWidth) / 2f
+                val y = cellY + sigHeight + textSigHeight + gap + (adjustedCellHeight - image.imageScaledHeight) / 2f
+                
+                image.setFixedPosition(pdfDocument.numberOfPages, x, y)
+                document.add(image)
+
+                signatureImageUri?.let { sigUri ->
+                    val sigImageData = getImageDataWithQuality(context, sigUri, quality)
+                    val sigImage = Image(sigImageData)
+                    val sigScale = min(252f / sigImageData.width, 100f / sigImageData.height)
+                    sigImage.scaleAbsolute(sigImageData.width * sigScale, sigImageData.height * sigScale)
+                    val sx = cellX + (cellWidth - sigImage.imageScaledWidth) / 2f
+                    val sy = cellY + textSigHeight
+                    sigImage.setFixedPosition(pdfDocument.numberOfPages, sx, sy)
+                    document.add(sigImage)
+                }
+
+                signature?.let { text ->
+                    val p = Paragraph(text).setFontSize(10f).setItalic().setTextAlignment(TextAlignment.CENTER)
+                    document.showTextAligned(p, cellX + cellWidth / 2f, cellY, pdfDocument.numberOfPages, 
+                        TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0f)
+                }
+            }
+
+            document.close()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun getImageDataWithQuality(context: Context, uri: Uri, quality: Int): com.itextpdf.io.image.ImageData {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val originalBytes = inputStream?.use { it.readBytes() } ?: throw Exception("Cannot read image")
+        if (quality >= 100) return ImageDataFactory.create(originalBytes)
+
+        val bitmap = BitmapFactory.decodeByteArray(originalBytes, 0, originalBytes.size)
+        val out = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+        return ImageDataFactory.create(out.toByteArray())
+    }
+
     private fun placeReceiptInSlot(
         context: Context,
         document: Document,
@@ -195,23 +321,59 @@ object AdvancedPdfGenerator {
         slotWidth: Float,
         slotHeight: Float,
         tolerance: Int,
+        signature: String? = null,
+        signatureImageUri: Uri? = null,
+        quality: Int = 100
     ) {
         if (!sourceFile.exists()) return
+
+        val textSigHeight = if (signature != null) 34f else 0f
+        val sigHeight = if (signatureImageUri != null) 100f else 0f
+        val gap = if (signatureImageUri != null || signature != null) 10f else 0f
+        val adjustedSlotHeight = slotHeight - sigHeight - textSigHeight - gap
 
         val processedReceipt = ImageProcessor.convertDocumentToCroppedImage(context, sourceFile, tolerance) ?: return
 
         try {
-            val imageData = ImageDataFactory.create(processedReceipt.absolutePath)
+            val uri = Uri.fromFile(processedReceipt)
+            val imageData = getImageDataWithQuality(context, uri, quality)
             val image = Image(imageData)
-            val scale = min(slotWidth / imageData.width, slotHeight / imageData.height)
+            val scale = min(slotWidth / imageData.width, adjustedSlotHeight / imageData.height)
             val scaledWidth = imageData.width * scale
             val scaledHeight = imageData.height * scale
             val x = slotX + ((slotWidth - scaledWidth) / 2f)
-            val y = slotY + ((slotHeight - scaledHeight) / 2f)
+            val y = slotY + sigHeight + textSigHeight + gap + ((adjustedSlotHeight - scaledHeight) / 2f)
 
             image.scaleAbsolute(scaledWidth, scaledHeight)
             image.setFixedPosition(pageNumber, x, y)
             document.add(image)
+
+            signature?.let { text ->
+                // Note: To support emojis, you must load a Unicode font:
+                // val font = PdfFontFactory.createFont("path/to/noto-sans.ttf", PdfEncodings.IDENTITY_H)
+                val p = Paragraph(text)
+                    .setFontSize(11f)
+                    .setItalic()
+                    .setTextAlignment(TextAlignment.CENTER)
+                
+                document.showTextAligned(p, slotX + slotWidth / 2f, slotY + 2f, pageNumber, 
+                    TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0f)
+            }
+
+            signatureImageUri?.let { sigUri ->
+                val sigImageData = getImageDataWithQuality(context, sigUri, quality)
+                val sigImage = Image(sigImageData)
+                
+                // Limit logo to business card width (252pt)
+                val maxWidth = min(slotWidth, 252f)
+                val sigScale = min(maxWidth / sigImageData.width, 100f / sigImageData.height)
+                
+                sigImage.scaleAbsolute(sigImageData.width * sigScale, sigImageData.height * sigScale)
+                val sigX = slotX + ((slotWidth - sigImage.imageScaledWidth) / 2f)
+                val sigY = slotY + textSigHeight
+                sigImage.setFixedPosition(pageNumber, sigX, sigY)
+                document.add(sigImage)
+            }
         } finally {
             processedReceipt.delete()
         }

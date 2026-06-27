@@ -259,21 +259,25 @@ androidx.lifecycle:lifecycle-runtime-compose:2.6.2
 
 ### Basic Flow
 
-1. **Create Project**
-   - Tap "Create New Project" on home
-   - Select a template
-   - Pick files from device
-   - Generate PDF
-   - Save or share
+1. **Choose Your Layout**
+   - Launch the app and select "Create New Project".
+   - Pick a template: **Collage (2 or 3 per page)** for standard stacking, or **Grid (R*C)** for custom layouts (like a 2x2 grid).
+2. **Configure Personalization (Settings)**
+   - Tap the **Settings icon** (⚙️) in the top bar.
+   - **Quality:** Choose 25%, 50%, or 75% to save storage, or 100% for maximum detail.
+   - **Signature Note:** Type a custom message (e.g., "Thank you for shopping! 🛍️").
+   - **Canva Signature:** Upload a branding image or signature logo. The app will automatically format this into a professional 3.5" x 2" business-card style area at the bottom of every receipt.
+3. **Add Files & Generate**
+   - Use the Multi-File Picker to select your receipt images or PDFs.
+   - Enter a project name and tap **Generate**.
+4. **Manage History**
+   - Access **Saved PDFs** from the home screen.
+   - **Individual Actions:** Tap the View, Share, or Delete icons on any card.
+   - **Bulk Actions:** Long-press any card to enter Selection Mode. You can then "Select All" to share a batch of PDFs or delete them at once after a safety confirmation.
 
-2. **View Projects**
-   - Tap "Recent Projects" to see history
-   - Each project shows metadata and status
-
-3. **Share Generated PDF**
-   - After generation, tap "Share PDF"
-   - Select app to share with
-   - Or save to Downloads folder
+## 📱 Pro Tips
+- Use the **Grid Layout (2x2)** with the **50% Quality** setting for the best balance between professional look and small file size.
+- The signature image and text are placed below each individual receipt unit, making them perfect for cutting out and handing to customers.
 
 ## 🔐 Security Features
 
