@@ -232,21 +232,22 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                         }
                     }
                     else -> {
-                        if (hasPdfFiles) {
-                            _errorMessage.value = "Selected PDF files cannot be converted using the current template. Use PDF Merge instead."
-                            false
+                        if (_currentTemplate.value == "grid_rc") {
+                            AdvancedPdfGenerator.createGridPdf(
+                                context = context,
+                                filePaths = cachedFiles.map { it.absolutePath },
+                                outputPath = outputPath,
+                                rows = _gridRows.value,
+                                cols = _gridCols.value,
+                                signature = _userSignature.value,
+                                signatureImageUri = _userSignatureImageUri.value,
+                                quality = _pdfQuality.value,
+                                tolerance = 10
+                            )
                         } else {
-                            if (_currentTemplate.value == "grid_rc") {
-                                AdvancedPdfGenerator.createGridPdfFromImages(
-                                    context,
-                                    files.map { it.uri },
-                                    outputPath,
-                                    _gridRows.value,
-                                    _gridCols.value,
-                                    _userSignature.value,
-                                    _userSignatureImageUri.value,
-                                    _pdfQuality.value
-                                )
+                            if (hasPdfFiles) {
+                                _errorMessage.value = "Selected PDF files cannot be converted using the current template. Use PDF Merge instead."
+                                false
                             } else {
                                 AdvancedPdfGenerator.createReceiptPdfFromImages(
                                     context,

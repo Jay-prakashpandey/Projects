@@ -218,17 +218,18 @@ object AdvancedPdfGenerator {
     }
 
     /**
-     * Create a grid layout (Rows x Columns) PDF
+     * Create a grid layout (Rows x Columns) PDF supporting images and PDF files
      */
-    fun createGridPdfFromImages(
+    fun createGridPdf(
         context: Context,
-        imageUris: List<Uri>,
+        filePaths: List<String>,
         outputPath: String,
         rows: Int,
         cols: Int,
         signature: String? = null,
         signatureImageUri: Uri? = null,
-        quality: Int = 100
+        quality: Int = 100,
+        tolerance: Int = 10
     ): Boolean {
         return try {
             val output = File(outputPath)
@@ -246,49 +247,60 @@ object AdvancedPdfGenerator {
             val cellWidth = availableWidth / cols
             val cellHeight = availableHeight / rows
 
-            imageUris.forEachIndexed { index, uri ->
-                val posInPage = index % (rows * cols)
-                
-                if (index > 0 && posInPage == 0) pdfDocument.addNewPage()
-                
-                val r = posInPage / cols
-                val c = posInPage % cols
-                
-                val textSigHeight = if (signature != null) 34f else 0f
-                val sigHeight = if (signatureImageUri != null) 100f else 0f
-                val gap = if (signatureImageUri != null || signature != null) 10f else 0f
-                val adjustedCellHeight = cellHeight - sigHeight - textSigHeight - gap
+            filePaths.forEachIndexed { index, filePath ->
+                val sourceFile = File(filePath)
+                if (!sourceFile.exists()) return@forEachIndexed
 
-                val cellX = margin + (c * cellWidth)
-                val cellY = pageSize.height - margin - ((r + 1) * cellHeight)
+                val processedReceipt = ImageProcessor.convertDocumentToCroppedImage(context, sourceFile, tolerance)
+                    ?: return@forEachIndexed
 
-                val imageData = getImageDataWithQuality(context, uri, quality)
-                val image = Image(imageData)
-                
-                val scale = min(cellWidth / imageData.width, adjustedCellHeight / imageData.height)
-                image.scaleAbsolute(imageData.width * scale, imageData.height * scale)
-                
-                val x = cellX + (cellWidth - image.imageScaledWidth) / 2f
-                val y = cellY + sigHeight + textSigHeight + gap + (adjustedCellHeight - image.imageScaledHeight) / 2f
-                
-                image.setFixedPosition(pdfDocument.numberOfPages, x, y)
-                document.add(image)
+                try {
+                    val uri = Uri.fromFile(processedReceipt)
+                    val posInPage = index % (rows * cols)
+                    
+                    if (index > 0 && posInPage == 0) pdfDocument.addNewPage()
+                    
+                    val r = posInPage / cols
+                    val c = posInPage % cols
+                    
+                    val textSigHeight = if (signature != null) 34f else 0f
+                    val sigHeight = if (signatureImageUri != null) 100f else 0f
+                    val gap = if (signatureImageUri != null || signature != null) 10f else 0f
+                    val adjustedCellHeight = cellHeight - sigHeight - textSigHeight - gap
 
-                signatureImageUri?.let { sigUri ->
-                    val sigImageData = getImageDataWithQuality(context, sigUri, quality)
-                    val sigImage = Image(sigImageData)
-                    val sigScale = min(252f / sigImageData.width, 100f / sigImageData.height)
-                    sigImage.scaleAbsolute(sigImageData.width * sigScale, sigImageData.height * sigScale)
-                    val sx = cellX + (cellWidth - sigImage.imageScaledWidth) / 2f
-                    val sy = cellY + textSigHeight
-                    sigImage.setFixedPosition(pdfDocument.numberOfPages, sx, sy)
-                    document.add(sigImage)
-                }
+                    val cellX = margin + (c * cellWidth)
+                    val cellY = pageSize.height - margin - ((r + 1) * cellHeight)
 
-                signature?.let { text ->
-                    val p = Paragraph(text).setFontSize(10f).setItalic().setTextAlignment(TextAlignment.CENTER)
-                    document.showTextAligned(p, cellX + cellWidth / 2f, cellY, pdfDocument.numberOfPages, 
-                        TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0f)
+                    val imageData = getImageDataWithQuality(context, uri, quality)
+                    val image = Image(imageData)
+                    
+                    val scale = min(cellWidth / imageData.width, adjustedCellHeight / imageData.height)
+                    image.scaleAbsolute(imageData.width * scale, imageData.height * scale)
+                    
+                    val x = cellX + (cellWidth - image.imageScaledWidth) / 2f
+                    val y = cellY + sigHeight + textSigHeight + gap + (adjustedCellHeight - image.imageScaledHeight) / 2f
+                    
+                    image.setFixedPosition(pdfDocument.numberOfPages, x, y)
+                    document.add(image)
+
+                    signatureImageUri?.let { sigUri ->
+                        val sigImageData = getImageDataWithQuality(context, sigUri, quality)
+                        val sigImage = Image(sigImageData)
+                        val sigScale = min(252f / sigImageData.width, 100f / sigImageData.height)
+                        sigImage.scaleAbsolute(sigImageData.width * sigScale, sigImageData.height * sigScale)
+                        val sx = cellX + (cellWidth - sigImage.imageScaledWidth) / 2f
+                        val sy = cellY + textSigHeight
+                        sigImage.setFixedPosition(pdfDocument.numberOfPages, sx, sy)
+                        document.add(sigImage)
+                    }
+
+                    signature?.let { text ->
+                        val p = Paragraph(text).setFontSize(10f).setItalic().setTextAlignment(TextAlignment.CENTER)
+                        document.showTextAligned(p, cellX + cellWidth / 2f, cellY, pdfDocument.numberOfPages, 
+                            TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0f)
+                    }
+                } finally {
+                    processedReceipt.delete()
                 }
             }
 
