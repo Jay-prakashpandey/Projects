@@ -51,7 +51,13 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
     val gridRows by viewModel.gridRows.collectAsState()
     val gridCols by viewModel.gridCols.collectAsState()
 
-    val receiptsPerPage = if (currentTemplate == "grid_rc") gridRows * gridCols else if (currentTemplate == "collage2") 2 else 3
+    val receiptsPerPage = if (currentTemplate == "grid_rc") {
+        (gridRows ?: 1) * (gridCols ?: 1)
+    } else if (currentTemplate == "collage2") {
+        2
+    } else {
+        3
+    }
 
     val projectName = remember {
         mutableStateOf(
@@ -162,7 +168,7 @@ fun PdfPreviewScreen(navController: NavController, viewModel: ReceiptMergerViewM
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val label = if (currentTemplate == "grid_rc") {
-                    "Generate ${gridRows}x${gridCols} Grid PDF"
+                    "Generate ${gridRows ?: 1}x${gridCols ?: 1} Grid PDF"
                 } else {
                     "Generate ${receiptsPerPage} per A4 PDF"
                 }

@@ -41,10 +41,10 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
     private val _userSignatureImageUri = MutableStateFlow<Uri?>(null)
     val userSignatureImageUri = _userSignatureImageUri.asStateFlow()
 
-    private val _gridRows = MutableStateFlow(2)
+    private val _gridRows = MutableStateFlow<Int?>(2)
     val gridRows = _gridRows.asStateFlow()
 
-    private val _gridCols = MutableStateFlow(2)
+    private val _gridCols = MutableStateFlow<Int?>(2)
     val gridCols = _gridCols.asStateFlow()
 
     private val _isProcessing = MutableStateFlow(false)
@@ -81,7 +81,7 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
         _userSignatureImageUri.value = uri
     }
 
-    fun setGridDimensions(rows: Int, cols: Int) {
+    fun setGridDimensions(rows: Int?, cols: Int?) {
         _gridRows.value = rows
         _gridCols.value = cols
     }
@@ -237,8 +237,8 @@ class ReceiptMergerViewModel(private val database: ReceiptMergerDatabase? = null
                                 context = context,
                                 filePaths = cachedFiles.map { it.absolutePath },
                                 outputPath = outputPath,
-                                rows = _gridRows.value,
-                                cols = _gridCols.value,
+                                rows = _gridRows.value ?: 1,
+                                cols = _gridCols.value ?: 1,
                                 signature = _userSignature.value,
                                 signatureImageUri = _userSignatureImageUri.value,
                                 quality = _pdfQuality.value,

@@ -82,6 +82,7 @@ object AdvancedPdfGenerator {
             val pdfWriter = PdfWriter(FileOutputStream(output))
             val pdfDocument = PdfDocument(pdfWriter)
             val document = Document(pdfDocument, PageSize.A4)
+            document.setMargins(20f, 20f, 20f, 20f)
 
             // Template-aware title
             val effectiveTitle = when (templateType) {
@@ -92,17 +93,17 @@ object AdvancedPdfGenerator {
 
             // Add header
             val headerParagraph = Paragraph(effectiveTitle)
-                .setFontSize(20f)
+                .setFontSize(15f)
                 .setBold()
                 .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(2f)
             document.add(headerParagraph)
 
             val dateParagraph = Paragraph("Generated: ${getCurrentDate()}")
-                .setFontSize(10f)
+                .setFontSize(8f)
                 .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(10f)
             document.add(dateParagraph)
-
-            document.add(Paragraph("\n"))
 
             // Add images
             imageUris.forEach { uri ->
@@ -113,6 +114,7 @@ object AdvancedPdfGenerator {
                     // Scale to fit A4 width with margins
                     image.scaleToFit(550f, 650f)
                     image.setHorizontalAlignment(HorizontalAlignment.CENTER)
+                    image.setMarginBottom(5f)
                     document.add(image)
 
                     signatureImageUri?.let { sigUri ->
@@ -120,20 +122,22 @@ object AdvancedPdfGenerator {
                         val sigImage = Image(sigImageData)
                         sigImage.scaleToFit(252f, 100f) // Business card width, max height for logo
                         sigImage.setHorizontalAlignment(HorizontalAlignment.CENTER)
-                        sigImage.setMarginTop(10f)
+                        sigImage.setMarginTop(5f)
+                        sigImage.setMarginBottom(5f)
                         document.add(sigImage)
                     }
 
                     // Add individual text signature per image
                     signature?.let { text ->
                         document.add(Paragraph(text)
-                            .setFontSize(12f)
+                            .setFontSize(10f)
                             .setItalic()
                             .setTextAlignment(TextAlignment.CENTER)
-                            .setMarginTop(5f))
+                            .setMarginTop(3f)
+                            .setMarginBottom(15f))
+                    } ?: run {
+                        document.add(Paragraph("").setMarginBottom(15f))
                     }
-
-                    document.add(Paragraph("\n"))
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -144,6 +148,8 @@ object AdvancedPdfGenerator {
                 .setFontSize(8f)
                 .setTextAlignment(TextAlignment.CENTER)
             document.add(footerParagraph)
+
+            document.add(Paragraph("\n"))
 
             document.close()
             true
@@ -224,13 +230,14 @@ object AdvancedPdfGenerator {
         context: Context,
         filePaths: List<String>,
         outputPath: String,
-        rows: Int,
+        @Suppress("UNUSED_PARAMETER") rows: Int,
         cols: Int,
         signature: String? = null,
         signatureImageUri: Uri? = null,
         quality: Int = 100,
-        tolerance: Int = 22
+        tolerance: Int = 10
     ): Boolean {
+        val processedFiles = mutableListOf<GridCellData>()
         return try {
             val output = File(outputPath)
             output.parentFile?.mkdirs()
@@ -238,16 +245,13 @@ object AdvancedPdfGenerator {
             val pdfWriter = PdfWriter(FileOutputStream(output))
             val pdfDocument = PdfDocument(pdfWriter)
             val document = Document(pdfDocument, PageSize.A4)
+            pdfDocument.addNewPage()
             
             val pageSize = PageSize.A4
-            val margin = 12f
+            val margin = 20f
             val availableWidth = pageSize.width - (margin * 2f)
-            val availableHeight = pageSize.height - (margin * 2f)
-            
             val cellWidth = availableWidth / cols
-            val cellHeight = availableHeight / rows
 
-            var placedCount = 0
             filePaths.forEach { filePath ->
                 val sourceFile = File(filePath)
                 if (!sourceFile.exists()) return@forEach
@@ -257,31 +261,61 @@ object AdvancedPdfGenerator {
 
                 try {
                     val uri = Uri.fromFile(processedReceipt)
-                    val posInPage = placedCount % (rows * cols)
-                    
-                    if (posInPage == 0) pdfDocument.addNewPage()
-                    
-                    val pageNumber = pdfDocument.numberOfPages
-                    val r = posInPage / cols
-                    val c = posInPage % cols
+                    val imageData = getImageDataWithQuality(context, uri, quality)
                     
                     val textSigHeight = if (signature != null) 34f else 0f
                     val sigHeight = if (signatureImageUri != null) 100f else 0f
                     val gap = if (signatureImageUri != null || signature != null) 10f else 0f
-                    val adjustedCellHeight = cellHeight - sigHeight - textSigHeight - gap
 
+                    val scale = cellWidth / imageData.width
+                    val scaledWidth = cellWidth
+                    val scaledHeight = imageData.height * scale
+                    val totalHeight = scaledHeight + sigHeight + textSigHeight + gap
+
+                    processedFiles.add(
+                        GridCellData(
+                            processedReceipt = processedReceipt,
+                            imageData = imageData,
+                            sigHeight = sigHeight,
+                            textSigHeight = textSigHeight,
+                            gap = gap,
+                            scaledWidth = scaledWidth,
+                            scaledHeight = scaledHeight,
+                            totalHeight = totalHeight
+                        )
+                    )
+                } catch (e: Exception) {
+                    processedReceipt.delete()
+                    throw e
+                }
+            }
+
+            var currentY = pageSize.height - margin
+            val rowGap = 15f
+
+            val rowList = processedFiles.chunked(cols)
+            rowList.forEach { rowCells ->
+                val rowHeight = rowCells.maxOf { it.totalHeight }
+
+                // Page break if row doesn't fit on the current page
+                if (currentY < pageSize.height - margin && currentY - rowHeight < margin) {
+                    pdfDocument.addNewPage()
+                    currentY = pageSize.height - margin
+                }
+
+                val pageNumber = pdfDocument.numberOfPages
+
+                rowCells.forEachIndexed { c, cell ->
                     val cellX = margin + (c * cellWidth)
-                    val cellY = pageSize.height - margin - ((r + 1) * cellHeight)
+                    val cellY = currentY - rowHeight
 
-                    val imageData = getImageDataWithQuality(context, uri, quality)
-                    val image = Image(imageData)
-                    
-                    val scale = min(cellWidth / imageData.width, adjustedCellHeight / imageData.height)
-                    image.scaleAbsolute(imageData.width * scale, imageData.height * scale)
-                    
-                    val x = cellX + (cellWidth - image.imageScaledWidth) / 2f
-                    val y = cellY + sigHeight + textSigHeight + gap + (adjustedCellHeight - image.imageScaledHeight) / 2f
-                    
+                    // Center vertically inside the row height
+                    val verticalPadding = (rowHeight - cell.totalHeight) / 2f
+                    val y = cellY + cell.sigHeight + cell.textSigHeight + cell.gap + verticalPadding
+                    val x = cellX + (cellWidth - cell.scaledWidth) / 2f
+
+                    val image = Image(cell.imageData)
+                    image.scaleAbsolute(cell.scaledWidth, cell.scaledHeight)
                     image.setFixedPosition(pageNumber, x, y)
                     document.add(image)
 
@@ -291,20 +325,19 @@ object AdvancedPdfGenerator {
                         val sigScale = min(252f / sigImageData.width, 100f / sigImageData.height)
                         sigImage.scaleAbsolute(sigImageData.width * sigScale, sigImageData.height * sigScale)
                         val sx = cellX + (cellWidth - sigImage.imageScaledWidth) / 2f
-                        val sy = cellY + textSigHeight
+                        val sy = cellY + cell.textSigHeight + verticalPadding
                         sigImage.setFixedPosition(pageNumber, sx, sy)
                         document.add(sigImage)
                     }
 
                     signature?.let { text ->
                         val p = Paragraph(text).setFontSize(10f).setItalic().setTextAlignment(TextAlignment.CENTER)
-                        document.showTextAligned(p, cellX + cellWidth / 2f, cellY, pageNumber, 
+                        document.showTextAligned(p, cellX + cellWidth / 2f, cellY + verticalPadding, pageNumber, 
                             TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0f)
                     }
-                    placedCount++
-                } finally {
-                    processedReceipt.delete()
                 }
+
+                currentY -= (rowHeight + rowGap)
             }
 
             document.close()
@@ -312,6 +345,8 @@ object AdvancedPdfGenerator {
         } catch (e: Exception) {
             e.printStackTrace()
             false
+        } finally {
+            processedFiles.forEach { it.processedReceipt.delete() }
         }
     }
 
@@ -530,4 +565,15 @@ data class ReceiptItem(
     val description: String,
     val quantity: Int,
     val price: Double,
+)
+
+private data class GridCellData(
+    val processedReceipt: File,
+    val imageData: com.itextpdf.io.image.ImageData,
+    val sigHeight: Float,
+    val textSigHeight: Float,
+    val gap: Float,
+    val scaledWidth: Float,
+    val scaledHeight: Float,
+    val totalHeight: Float
 )

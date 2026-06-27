@@ -132,15 +132,15 @@ fun TemplateSelectionScreen(navController: NavController, viewModel: ReceiptMerg
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     OutlinedTextField(
-                        value = gridRows.toString(),
-                        onValueChange = { viewModel.setGridDimensions(it.toIntOrNull() ?: 1, gridCols) },
+                        value = gridRows?.toString() ?: "",
+                        onValueChange = { viewModel.setGridDimensions(it.toIntOrNull(), gridCols) },
                         label = { Text("Rows") },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                     OutlinedTextField(
-                        value = gridCols.toString(),
-                        onValueChange = { viewModel.setGridDimensions(gridRows, it.toIntOrNull() ?: 1) },
+                        value = gridCols?.toString() ?: "",
+                        onValueChange = { viewModel.setGridDimensions(gridRows, it.toIntOrNull()) },
                         label = { Text("Cols") },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
