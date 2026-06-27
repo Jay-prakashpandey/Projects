@@ -229,7 +229,7 @@ object AdvancedPdfGenerator {
         signature: String? = null,
         signatureImageUri: Uri? = null,
         quality: Int = 100,
-        tolerance: Int = 10
+        tolerance: Int = 22
     ): Boolean {
         return try {
             val output = File(outputPath)
@@ -240,7 +240,7 @@ object AdvancedPdfGenerator {
             val document = Document(pdfDocument, PageSize.A4)
             
             val pageSize = PageSize.A4
-            val margin = 20f
+            val margin = 12f
             val availableWidth = pageSize.width - (margin * 2f)
             val availableHeight = pageSize.height - (margin * 2f)
             
@@ -248,12 +248,12 @@ object AdvancedPdfGenerator {
             val cellHeight = availableHeight / rows
 
             var placedCount = 0
-            filePaths.forEachIndexed { index, filePath ->
+            filePaths.forEach { filePath ->
                 val sourceFile = File(filePath)
-                if (!sourceFile.exists()) return@forEachIndexed
+                if (!sourceFile.exists()) return@forEach
 
                 val processedReceipt = ImageProcessor.convertDocumentToCroppedImage(context, sourceFile, tolerance)
-                    ?: return@forEachIndexed
+                    ?: return@forEach
 
                 try {
                     val uri = Uri.fromFile(processedReceipt)
