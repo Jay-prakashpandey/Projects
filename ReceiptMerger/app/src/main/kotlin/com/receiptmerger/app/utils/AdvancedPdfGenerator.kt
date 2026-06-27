@@ -247,6 +247,7 @@ object AdvancedPdfGenerator {
             val cellWidth = availableWidth / cols
             val cellHeight = availableHeight / rows
 
+            var placedCount = 0
             filePaths.forEachIndexed { index, filePath ->
                 val sourceFile = File(filePath)
                 if (!sourceFile.exists()) return@forEachIndexed
@@ -256,10 +257,11 @@ object AdvancedPdfGenerator {
 
                 try {
                     val uri = Uri.fromFile(processedReceipt)
-                    val posInPage = index % (rows * cols)
+                    val posInPage = placedCount % (rows * cols)
                     
-                    if (index > 0 && posInPage == 0) pdfDocument.addNewPage()
+                    if (posInPage == 0) pdfDocument.addNewPage()
                     
+                    val pageNumber = pdfDocument.numberOfPages
                     val r = posInPage / cols
                     val c = posInPage % cols
                     
@@ -280,7 +282,7 @@ object AdvancedPdfGenerator {
                     val x = cellX + (cellWidth - image.imageScaledWidth) / 2f
                     val y = cellY + sigHeight + textSigHeight + gap + (adjustedCellHeight - image.imageScaledHeight) / 2f
                     
-                    image.setFixedPosition(pdfDocument.numberOfPages, x, y)
+                    image.setFixedPosition(pageNumber, x, y)
                     document.add(image)
 
                     signatureImageUri?.let { sigUri ->
@@ -290,15 +292,16 @@ object AdvancedPdfGenerator {
                         sigImage.scaleAbsolute(sigImageData.width * sigScale, sigImageData.height * sigScale)
                         val sx = cellX + (cellWidth - sigImage.imageScaledWidth) / 2f
                         val sy = cellY + textSigHeight
-                        sigImage.setFixedPosition(pdfDocument.numberOfPages, sx, sy)
+                        sigImage.setFixedPosition(pageNumber, sx, sy)
                         document.add(sigImage)
                     }
 
                     signature?.let { text ->
                         val p = Paragraph(text).setFontSize(10f).setItalic().setTextAlignment(TextAlignment.CENTER)
-                        document.showTextAligned(p, cellX + cellWidth / 2f, cellY, pdfDocument.numberOfPages, 
+                        document.showTextAligned(p, cellX + cellWidth / 2f, cellY, pageNumber, 
                             TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0f)
                     }
+                    placedCount++
                 } finally {
                     processedReceipt.delete()
                 }
